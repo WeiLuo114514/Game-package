@@ -1,6 +1,6 @@
 ---
 name: tech-patterns-effects-triggers
-description: 运算牌效果和王牌效果的技术规范 — apply vs trigger vs signal 三套模式、AnimationRequest、飘字、UI刷新、音效系统、bonus_requeue插队、UI音效架构、效果范围预览系统、商店特价区、倍增魔法、利息上限+魔法容量动态变量、结局面板全局统计、SettlementSequencer超时修复、教程AnimationPlayer集成、绿色封锁多入口模式、效果削弱范式（2026-07-19 更新）
+description: 运算牌效果和王牌效果的技术规范 — apply vs trigger vs signal 三套模式、ON_CARD_RESOLVED触发器、王牌触发器统一派发、种子系统+RNG架构、AnimationRequest、飘字、UI刷新、音效系统、bonus_requeue插队、效果范围预览系统、绿色封锁多入口模式、效果削弱范式（2026-08-08 更新）
 metadata: 
   node_type: memory
   type: reference
@@ -698,3 +698,245 @@ sim_bases[index] = expected
 ```
 
 用概率加权让预览分数反映长期平均，避免欺骗性高亮。
+
+
+## ON_CARD_RESOLVED 触发器（2026-08-07 新增）
+
+### 定位
+填补王牌触发器体系的空白——在每张运算牌效果结算完毕后派发，context 含 `card_data`（CardData）和 `card_node`（Card 节点）。
+
+### 定义
+`TriggerDefines.gd`: `const ON_CARD_RESOLVED := "card_resolved"`
+
+### 派发点
+`PlayField._execute_card_effect_phase()`: 每张牌 `await _animate_single_card_effect()` 后调用：
+```gdscript
+GameData.trigger_wild_effects(Trigger.ON_CARD_RESOLVED, {"card_data": cd, "card_node": card})
+```
+
+### 用途
+- 试炼王牌（9005/9006）：react to specific color card resolution
+- 普通王牌（1002/1004/1006/2005/2008/2009/3008）：累计计数/概率再触发
+
+### 与 card_effect_triggered 信号的区别
+| | ON_CARD_RESOLVED 触发器 | card_effect_triggered 信号 |
+|--|----------------------|--------------------------|
+| 派发方式 | `trigger_wild_effects` 统一遍历 | 手动 connect/disconnect |
+| 适用对象 | slot wild + level wild（统一） | 仅 slot wild（需持久节点） |
+| 配置方式 | config trigger_list 声明式 | `_init` 中手动连接 |
+| 架构定位 | 主要路径（2026-08-07 后） | 遗留（仅 audio/background 系统使用） |
+
+### 迁移规范
+所有「运算牌效果生效时」逻辑应走 ON_CARD_RESOLVED，不再使用 card_effect_triggered 信号：
+```gdscript
+func _execute(trigger: String, _context: Dictionary):
+    if trigger == Trigger.ON_CARD_RESOLVED:
+        var cd: CardData = _context.get("card_data")
+        # 逐卡逻辑
+```
+
+### 已迁移的普通王牌
+1002 子母弹、1004 永恒火焰、1006 普罗米修斯、2005 利息、2008 金黄扑满、2009 奇货可居、3008 死战不退
+
+
+## 王牌触发器统一派发（2026-08-07 重构）
+
+### trigger_wild_effects 覆盖率
+`GameData.trigger_wild_effects(trigger, context)` 现在统一遍历两个来源：
+```gdscript
+func trigger_wild_effects(trigger: String, context: Dictionary = {}) -> void:
+    # 槽位王牌
+    for node in wild_slot.wild_card_nodes: ...
+    # 试炼王牌（level_wild_cards）
+    for wd in level_wild_cards:
+        var effect := _make_temp_effect_instance(wd)
+        effect.try_execute(trigger, context)
+```
+
+### 影响
+- 试炼王牌现在参与所有触发器（ON_PRE_SETTLE/ON_CARD_RESOLVED/ON_DRAW_CARD/ON_DISCARD_CARD/ON_AFTER_SETTLE/ON_SETTLE_STEP），和槽位王牌完全一致
+- `apply_level_wild_pre_settle` 仅保留 `stage_mods.clear()`，不再独立遍历试炼王牌
+- `trigger_all_wild_effects` 已删除（冗余）
+
+
+## 种子系统 & RNG 架构（2026-08-07 实现）
+
+### 播种
+`GameData.init_game_from_deck()` 开头：
+```gdscript
+if _rng_seed == 0:
+    set_seed(hash(int(Time.get_unix_time_from_system())) & 0x7FFFFFFF)
+else:
+    set_seed(_rng_seed)  # 用户指定种子，每局重新应用
+```
+
+### PCG 接口
+| 方法 | 遮蔽的内置函数 | 用途 |
+|------|--------------|------|
+| `randf() -> float` | 全局 randf() | [0,1) 浮点 |
+| `randi() -> int` | 全局 randi() | 随机整数 |
+| `randi_range(a, b) -> int` | 全局 randi_range() | 整数范围 |
+| `randf_range(a, b) -> float` | 全局 randf_range() | 浮点范围 |
+| `rng_shuffle(arr) -> void` | 无（替代 Array.shuffle） | 种子化洗牌 |
+| `chance(pct, name, pos) -> bool` | 无 | 概率判定 + 好运计数 |
+
+### GDScript 方法遮蔽规则
+Autoload 类定义的同名方法优先于全局内置函数——仅在**该类内部**生效。外部脚本需显式写 `GameData.randi()` 才能使用种子流。
+
+### 接入范围
+- **已接入**：GameData.gd 全量内部调用 + event_page/shop_page/blind_box/PlayField/EventConfig + 所有 wildCardScript 中涉及游戏逻辑的调用
+- **故意未接入**：纯表现层（tips_label 喝彩/动画、audio_manager 音效、camera_2d 震动、flying_label 弧线、LoadMask 提示、GameData 胜利彩带）
+
+
+## 标签系统架构（2026-08-08 重构）
+
+### TagSystem Autoload
+
+所有标签行为在  集中注册，流程节点通过  轮询。
+
+
+
+### 调度接口
+
+| 方法 | 用途 | 返回值 |
+|------|------|--------|
+|  | 单卡事件轮询 | void，通过 ctx 传结果 |
+|  | 批量轮询 | void |
+|  | 短路查询 | bool |
+|  | 最值查询 | Variant |
+|  | 累加查询 | int |
+
+### 消费点迁移
+
+迁移前：has_tag 散落在 PlayField/GameData/card_container/card_data 5 个文件
+迁移后：所有标签行为在 TagSystem._register_all() 一处注册
+
+### 新增标签 CHECKLIST
+
+1. : TagType 枚举 + TAG_PRIORITY_ORDER + TAG_COLORS
+2. : _register_all() 注册 handler
+3. 流程节点：dispatch_one 调用（如 PlayField._fly_out_cards_and_clear_slots 的 BOUNCE）
+4. : 两个 TAG_DESCS 块添加条目
+5. : 对应魔法配置（如有）
+
+## 魔法预览系统（2026-08-08 重构）
+
+### 旧架构
+
+select_card._preview_effect() 用 match _magic_id 硬编码 11 个 case。加新魔法需改 select_card.gd。
+
+### 新架构
+
+BaseMagic 提供 virtual ，每个魔法脚本覆写。
+select_card 加载脚本 → 实例化 → 调用 preview_effect(target) → queue_free()。
+
+
+
+consumes_slot() 替代硬编码豁免列表（）。
+
+## 卡牌预升级（2026-08-08）
+
+- GameData.UPGRADE_CHANCE := {0: 0.40, 1: 0.25, 2: 0.10}（C/B/A，品质越低概率越高）
+- open_gacha_pack 中摇完品质+变种后判定：
+- 使用 card_data.quality（实际品质）而非 selected_quality（可能降级）
+
+## 卡牌统计账簿（2026-08-08）
+
+- card_ledger: { card_id: { levels, uses, best_score } }
+- flush_level_to_ledger(level_score)：每关结算调用，取 stats.card_usage 增量
+- _last_committed 防重复提交，随 _reset_stats 清空
+- 耐久性：每关写入，不等到局末
+
+## 特价区架构（2026-08-08）
+
+- on_sale_slots = [GoodsPack, GoodsMagic, GoodsWildCard]（3 个预放组件）
+- _refresh_on_sale：按 category 权重选出 1 个，只显示该组件
+- 购买路由：三个独立 handler（_on_sale_pack_purchased / _on_sale_magic_purchased / _on_sale_wild_purchased）
+- GoodsMagic/GoodsWildCard 新增 discount_rate 字段，refresh_state 显示折后价
+- 当前 category 写死为 0（只出卡包），后续王牌效果解锁魔法/王牌类别
+## 标签系统架构（2026-08-08 重构）
+
+### TagSystem Autoload
+
+所有标签行为在 `TagSystem._register_all()` 集中注册，流程节点通过 `dispatch_one(event, card, ctx)` 轮询。
+
+事件型标签将结果写入 ctx 字典，调用方读取 ctx 决定后续行为：
+
+```
+register(T.RETAIN, "on_end_round", func(_card, ctx): ctx["retain"] = true)
+register(T.BOUNCE, "on_after_resolve", func(_card, ctx): ctx["bounce"] = true)
+```
+
+查询型标签通过 query_any / query_max / query_sum 同步返回值：
+
+```
+register(T.CHAMELEON, "query_has_color", func(_card, _target): return true)
+register(T.SUPERBODY, "query_effective_level", func(_card): return 3)
+```
+
+### 调度接口
+
+| 方法 | 用途 | 返回值 |
+|------|------|--------|
+| dispatch_one(event, card, ctx) | 单卡事件轮询 | void，通过 ctx 传结果 |
+| dispatch(event, cards, ctx) | 批量轮询 | void |
+| query_any(method, card, default, extra_args) | 短路查询 | bool |
+| query_max(method, card, default) | 最值查询 | Variant |
+| query_sum(method, card, default) | 累加查询 | int |
+
+### 消费点迁移
+
+- 迁移前：has_tag 散落在 PlayField/GameData/card_container/card_data 5 个文件 8 个消费点
+- 迁移后：所有标签行为在 TagSystem._register_all() 一处注册
+- 新增标签 CHECKLIST：card_data 枚举 → TagSystem 注册 handler → 流程节点 dispatch → CardUI TAG_DESCS → MagicConfig 魔法配置（如需）
+
+### TagType 编号
+
+- 掩码→顺序：1,2,4,8,16,32,64,128 → 1,2,3,4,5,6,7,8,9,10,11,12,13
+- Array[int] 存储 + t in tags 查找，掩码无意义
+- 所有引用走枚举名（TAG_DESCS/TAG_TEXTURES/EventConfig），改值自动跟随
+
+## 魔法预览系统（2026-08-08 重构）
+
+### 旧架构
+
+select_card._preview_effect() 用 match _magic_id 硬编码 11 个 case。加新魔法需改 select_card.gd。
+
+### 新架构
+
+BaseMagic 提供 virtual `preview_effect(_target: CardData)`，每个魔法脚本覆写。
+select_card 加载脚本 → 实例化 → 调用 preview_effect(target) → queue_free()。
+
+consumes_slot() 替代硬编码豁免列表（`_magic_id != 20001 and ...`）。
+
+## 卡牌预升级（2026-08-08）
+
+- GameData.UPGRADE_CHANCE := {0: 0.40, 1: 0.25, 2: 0.10}（C/B/A）
+- 品质越低概率越高，BASE 包 ~52% 至少 1 张升级
+- open_gacha_pack 中摇完品质+变种后判定
+- 使用 card_data.quality（实际品质）而非 selected_quality
+
+## 卡牌统计账簿（2026-08-08）
+
+- card_ledger: { card_id: { levels, uses, best_score } }
+- flush_level_to_ledger(level_score)：每关结算调用，取 stats.card_usage 增量
+- _last_committed 防重复提交，随 _reset_stats 清空
+- 每关写入保证耐久性（崩溃不丢数据）
+- card_data.increment_effect_count(delta)：激发标签在此 +1 额外计数
+
+## 特价区架构（2026-08-08）
+
+- on_sale_slots = [GoodsPack, GoodsMagic, GoodsWildCard]（3 个预放组件）
+- _refresh_on_sale：按 category 选出 1 个，只显示该组件，其余隐藏
+- 购买路由：三个独立 handler（_on_sale_pack_purchased / _on_sale_magic_purchased / _on_sale_wild_purchased）
+- GoodsMagic/GoodsWildCard 新增 discount_rate 字段，refresh_state 显示折后价（仅折后价，不含划线和百分比标记）
+- 当前 category 写死为 0（只出卡包），后续王牌效果解锁魔法/王牌类别
+- 特价魔法候选池排除 90001 + SHOP_MAGIC_BLACKLIST
+- 特价王牌候选池仅 B/A 品质
+
+## OPCard 标签显示（2026-08-08 修复）
+
+- 标签改为静态构建：在 _update_static_ui() 中紧跟 EffectLabel.text 设置后一次性拼接
+- 删除 _append_tags_to_effect_label() 追加/清洗模式（split("。") 无法正确清理 \n 后的标签行）
+- 格式：同排用 `、` 分隔，无 `【】`，末尾起一行
+- _state_slot_enter 中强制重置 hover_Rect.visible=false + _change_scale(normal_vec)
