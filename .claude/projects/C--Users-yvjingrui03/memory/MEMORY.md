@@ -1,104 +1,76 @@
-- [腾讯独立游戏比赛 2026-09-15](tencent-indie-competition-20260915.md) — 开放比赛/交一个作品/几十个名额/用Arithmetrick参赛/剩26天倒排
-- [畅游复试通过+HR终面 2026-08-20](daily-life-20260820.md) — 复试通过/16:15中台面(轮转岗)50分钟/薪资16-18k到手1.2-1.35万年总包22-29万/结果周一或周二/个人账号计划
-- [畅游复试复盘 2026-08-18](interview-reflection-20260818.md) — 湛蕾73分钟业务深面/策划案"为什么"层缺失但口头有设计决策/教学式反馈/体感稳了等HR
-- [复试前夜准备 2026-08-18](interview-prep-20260818.md) — 三面复盘深化(话轮判断/空包弹/落机制层/策划案武器)+STS2面试答案+战前清单
-- [成本策略 2026-08-15](cost-strategy-20260815.md) — DS 8-17涨价应对：维持V4 Pro忍价/放弃harness/等实习降强度+华子卡降价再上强度
-- [世界观高维设定 2026-08-15](world-setting-20260815.md) — 不是旅行是数字空间推演历史：运算牌=历史节点/王牌=推演规则/左到右=历史流向/四色=四幕历史剧
-- [开发日志 2026-08-16](dev-log-20260816.md) — 美术与世界观会话：16个事件插图中文prompt全量(故事书简笔画/400×550)+美术风格档案+情绪曲线配色
-- [日常生活 2026-08-14](daily-life-20260814.md) — 畅游复试通知(8/18周二10:00)/复试前动作：周末出数值表+系统文档周一发安和/三面补充复盘
-- [开发日志 2026-08-14](dev-log-20260814.md) — 白色5xxx事件王牌×5全实现(巫女的吻/过期的烈酒/破损的藏宝图/垃圾·王/精灵秘酿)/费用锁定闸门/ON_SELL_MAGIC触发器/特价区解锁/事件本体待实现
-- [日常生活 2026-08-13](daily-life-20260813.md) — 畅游三面47分钟纯业务面(数值策划芦宁)/晚间复盘：转TD承诺半假/带宽检测/桌面产出2份准备文件/DeepSeek调价8-17生效/生态位表述
-- [畅游三面复盘 2026-08-13](interview-reflection-20260813.md) — 岗位错位/文档短板反击词/估算题常识锚定/带宽检测(表格型vs叙事型)/Balatro换角度不换游戏/数值题库盲区=F2P商业化
-- [日常生活 2026-08-12](daily-life-20260812.md) — The Witness 30分钟退款/畅游面试8/13下午3:30确认/HR面准备要点/Steam上线=面试新王牌
-- [日常生活 2026-08-08](daily-life-20260808.md) — 汉堡王夜宵(29块一斤鸡柳味一般)/司涵聊天(物政生巧合/互动轻快)/毕业论文实验全流程推进
-- [毕业论文进度 2026-08-08](thesis-progress-20260808.md) — 240条API调用完成/自动指标Distinct-2+Self-BLEU/8人评分表生成/约束-多样性权衡初步发现
-- [日常生活 2026-08-07](daily-life-20260807.md) — 高强度开发/毕业论文题目确定(LLM叙事评估+Prompt优化)/抖音新加司涵/年龄与恋爱焦虑
-- [日常生活 2026-08-05](daily-life-20260805.md) — 爬山生还(下雨/摔跤/呕吐/抽筋)/薯条四重奏连锁反应→STS A3/新疆女生关系正常/畅游等待中
-- [开发日志 2026-08-11](dev-log-20260811.md) — 设置页面全量实现(6项内容+7动画跳转)/ConfigFile持久化/震屏开关/RoundMenu子页面残留修复/教程动画修复/Steam审核通过
-- [开发日志 2026-08-09](dev-log-20260809.md) — Steam审核等待中(第四工作日)/功能性测试规划/事件扩充计划(每阶段1个→3+个)
-- [开发日志 2026-08-08](dev-log-20260808.md) — 经济数值调整(BOSS1.5×/利息10)/印记替换系统(FIFO队列+undo)/商店全局去重/关卡王牌全量审计23张/新卡牌睡眠+优质睡眠/新王牌激发潜能/结算动画固定落点/7项Bug修复
-- [开发日志 2026-08-07](dev-log-20260807.md) — StartHand退场动画/种子系统全量接入/标题动态效果/CardLight+CardUI统一/试炼王牌22张全量实装/ON_CARD_RESOLVED触发器/王牌系统统一迁移/收尾专家削弱
-- [开发日志 2026-08-06](dev-log-20260806.md) — 动态起始牌组设计(固定核心+分色随机池)/爆燃传火上帝之手效果重做/底牌实现顺序规划
-- [开发日志 2026-08-05](dev-log-20260805.md) — 阴影反向修复/事件池Bug/试炼牌品质统一+22张全量重设计(目标分上升换能力)
-- [开发日志 2026-08-04](dev-log-20260804.md) — Steam商店页全量填写提交审核/灵言削弱(30001消耗费用)/王的财宝Bug修复
-- [开发日志 2026-08-01](dev-log-20260801.md) — Steam商店页启动/Logo设计定稿(Arithmetrick白线手写体+末端延伸回染色)/AI prompt出图验证
-- [深度对话 2026-08-01](deep-conversation-20260801.md) — 7/31晚间至8/01凌晨全领域对话：博弈论全系列/电车难题/自由意志/ENFJ自我分析/性心理学/多益复盘
-- [开发日志 2026-07-31](dev-log-20260731.md) — StartMenu设置页/卡包免费弃牌重分配(红1黄1蓝2)/底牌显示接入
-- [日常生活 2026-07](daily-life-202607.md) — 求职全流程(畅游/多益/乐元素/莉莉丝)/人际关系/自我认知/游戏体验
-- [开发日志 2026-07-29](dev-log-20260729.md) — Arithmetrick暂停中/STS2联机体验验证
-- [推荐决策模型修正](feedback-decision-model.md) — 社交/联机因素权重应高于单机恢复逻辑，做推荐时先问「有人一起吗」
-- [开发日志 2026-07-28](dev-log-20260728.md) — 开发暂停中/FPS+增量游戏创意点子归档
-- [开发日志 2026-07-24](dev-log-20260724.md) — Steam税务审核通过/竞品分析文档/畅游二面(求职见daily-life)
-- [畅游二面复盘 (2026-07-24)](interview-reflection-20260724.md) — 抽象→具体切换技巧/示弱+补救模式/实习生面超纲题应对/面试官教学信号
-- [开发日志 2026-07-23](dev-log-20260723.md) — 行动点系统代码审查/设计谱系纠正(崩铁→色彩启示录→元素爬塔)/面试模拟(求职见daily-life)
-- [开发日志 2026-07-22](dev-log-20260722.md) — 行动点制+装备SPD重构/Boss系统/弱点随机化/Steam税务KYC重填/畅游笔试交付(求职见daily-life)
-- [开发日志 2026-07-21](dev-log-20260721.md) — 二合爬塔RPG全系统补完：波次链+飘字+数值重设计+除法公式+经验升级+装备掉落系统
-- [亲密关系模式与择偶认知 (2026-07-21)](intimacy-patterns-mate-selection-20260721.md) — 幻想驱动型亲密/情感归属式占有欲/择偶四维标准/价值等式投射/已验证模型复盘
-- [二合爬塔RPG 技术规范](merge2-tech-patterns-20260721.md) — Autoload架构/输入系统/棋盘刷新/六元素效果表/进度条Tween/伤害公式
-- [米哈游3D解谜参赛构想 (2026-07-10)](mihoyo-3d-puzzle-20260710.md) — 冲刺+回溯双机制空间解谜/实验室主题/关卡曲线/MVP scope
-- [开发日志 2026-07-13](dev-log-20260713.md) — 效果预览系统(45张卡全量实装)/商店重构(删事件+升级，加特价区)/倍增魔法90001/视频#0策略(Arithmetrick首曝新号发布)
-- [设计哲学与面试叙事 (2026-07-10)](design-philosophy-20260710.md) — 迭代驱动设计/风险筹码理论/项目起源/面试30秒pitch
-- [元素反应规则](elemental-reaction-rules.md) — 用户讲解版：磨损/克制/冻燃激绽/CD/反应系数/多重反应优先级
-- [元素反应复刻项目](elemental-reaction-project.md) — Godot 4.6，16/16 反应，P0 全完成，DamageCalculator 全管道集成，腾讯开局一课大作业（2026-06-19 推进，文档已生成）
-- [算了项目 (Godot 4.6 卡牌游戏)](suanle-project.md) — 主项目：数学运算 DBG 卡牌游戏，引擎名「简单算术魔法」，位于 E:/简单的算术魔法
-- [算了吧？plus 参考项目](suanleba-plus-reference.md) — 旧案：新项目的功能参考原型，位于 Documents/算了吧？plus
-- [用户偏好](user-prefs.md) — 游戏策划/开发者，Godot 4.6，中文命名，参考旧案重构
-- [游戏口味](gaming-taste.md) — 五维认知风格框架(空间/反馈/信息/失败成本/智力投入)/Portal封顶/The Witness退款/开放世界完全拮抗
-- [2026-06-02 设计决策](design-decisions-20260602.md) — 颜色流派评审、卡牌去留、生命值/概率系统等关键决策
-- [Unity 学习计划](unity-learning.md) — 后续 3D 项目用 Unity/团结引擎，桌面有 Godot→Unity 对照表
-- [AI/ML 学习](ai-ml-learning.md) — 数据科学专业，毕设+游戏行业涉及模型训练，推荐 LoRA 微调游戏 NPC 对话方向
-- [项目里程碑 (2026-06-06)](milestones-20260606.md) — 2026-06-10 更新：M3内容补全、M4系统完善、M5打磨发布
-- [结算序列器架构设计](settlement-sequencer-design.md) — 触发器阶段驱动 + AnimationRequest 统一规范 + GameData 总控流程（2026-06-12 设计并实现 ✅）
-- [结算序列器实施决策](settlement-sequencer-decisions-20260612.md) — Phase 终稿/Priority 规范/动画映射/效果清单/错误处理（2026-06-12 实施完毕 ✅）
-- [2026-06-10 设计决策](design-decisions-20260610.md) — 特殊运算牌变体、王牌镀层、魔法牌、卡牌升级、牌库永久化
-- [蓝色套牌设计 (2026-06-17)](blue-deck-design-20260617.md) — 15 张 ÷ 弃置转化流设计，主题明确逻辑自洽，已通过评审待实现
-- [卡牌情感化系统 (2026-06-19)](card-emotional-system-20260619.md) — ID系统/X品质/专属魔法/回忆录/收藏柜，设计定稿
-- [开发日志 (2026-06-19/20)](dev-log-20260619.md) — ID实现/品质铭牌/软上限/关卡王牌/粒子特效/Bug×7
-- [名词释义表 (2026-06-20)](terminology-glossary-20260620.md) — 运算卡/王牌/异彩(Luster)/镀层/槽位/本局·本关·结算/关卡挑战等级/操作动词/经济
-- [开发日志 (2026-06-21)](dev-log-20260621.md) — L1022斗转星移/30016英雄的梦呓/30017还魂/卡牌小故事系统/洗入注册表/WildData Bug修复/Excel同步
-- [开发日志 (2026-06-22)](dev-log-20260622.md) — 王牌双层hover动画/28张效果脚本全实现/状态描述系统/商店hover统一/PS分层材质就位
-- [王牌全面重设计 (2026-06-22)](ace-redesign-20260622.md) — 27张新常规王牌+22张关卡王牌，ID体系9xxx重组，长按右键回收机制已实现，旧版全部淘汰
-- [开发日志 (2026-06-23/24)](dev-log-20260623.md) — 关卡王牌→试炼+盲盒重构，WildSlot/MagicSlot迁至GameWorld，Godot 4.7类型推断适配，Card输入锁
-- [开发日志 (2026-06-24/25)](dev-log-20260624.md) — Bug修复×7/结算盲盒重构/飘字系统/弃牌消耗设计/红黄蓝数值平衡方案
-- [开发日志 (2026-06-25/26)](dev-log-20260625.md) — 魔法槽位/升级独立链路/LevelPanel动画/弃牌消耗/信号泄漏修复/限定shader/平衡调整13项
-- [开发日志 (2026-06-26/27)](dev-log-20260626.md) — 魔法系统大规模扩展(7新魔法)/颜色判定集中化重构(50+处)/卡牌剪影系统/UI打磨/商店黑名单
-- [颜色判定重构 (2026-06-26)](color-judgment-refactor-20260626.md) — has_color()统一入口/extra_colors多色判定/渐进式重构决策
-- [绿色套牌设计定稿 (2026-06-28)](green-deck-design-20260627.md) — 15 张 v0.3 定稿，费用操作+森木枯荣循环，待今日实施
-- [商店颜色过滤 (2026-06-27)](shop-color-filter-20260627.md) — 颜色按钮循环切换，权重倾斜而非硬锁定
-- [发布前规划 (2026-06-27)](release-plan-20260627.md) — 绿色 & 镀层冻结，转向三色打磨发布，社区共创路线
-- [标签系统 v2 (2026-07-03)](tag-system-20260703.md) — 互斥→位掩码并存，has_tag/add_tag，多标签彩色描述，_is_temporary 修复
-- [黄色 RNG + 好运数系统 (2026-06-30)](yellow-rng-luck-system-20260630.md) — 翻面挂起，概率操纵方向定案，好运/霉运计数器已实现
-- [开发日志 (2026-07-01)](dev-log-20260701.md) — 黄牌17张全重做/黄王牌9张实装/永久临时底数审计/Bug×10/白牌缩为1张/乘法在后重做/魔法回收/King's Well参考
-- [经济平衡 2026-07-02](economic-balance-20260702.md) — 全魔法定价/异彩重做/盲盒重做/卡包调整/利息调整/双单元保底/标签魔法/PlayInfo动画
-- [开发日志 2026-07-02](dev-log-20260702.md) — 究极卡包/开局事件/InfoPage状态机/跨色桥牌/WEALTH标签/SelectCard多段删卡
-- [InfoPage 动画状态机规范](infopage-anim-state-20260702.md) — AnimState 五状态/统一关卡检查/守卫规则
-- [生效区重设计 ✅ (2026-07-03)](active-zone-redesign-20260703.md) — 已实施：动态数组+容量可变+CardContainer零reparent+SlotGuide
-- [标签系统 v2 (2026-07-03)](tag-system-20260703.md) — 互斥→位掩码并存，has_tag/add_tag，多标签彩色描述
-- [开发日志 (2026-07-03)](dev-log-20260703.md) — 生效区重构+王牌打磨+标签并存，84 files changed，含技术教训
-- [王牌触发器审计 (2026-07-03)](wild-card-trigger-audit-20260703.md) — 统一 ON_SETTLE_STEP，信号驱动计数，永久累加模式
-- [底数计算公式与术语规范 (2026-07-04)](base-number-formula-20260704.md) — (base+delta)×mult，翻倍≠+base，白矮星/引火已修复
-- [开发日志 2026-07-04](dev-log-20260704.md) — 王牌全打磨日：底数公式/标签列表迁移/幸运标签/信号驱动计数/信号卫生审计/14王牌修复/wild_state_changed拉取模式
-- [开发日志 2026-07-04 下半场](dev-log-20260704-pt2.md) — 王牌效果节点重构(全局缓存→场景子节点)/飘字统一/蓝色王牌3001-3009全打磨/黄色王牌2006-2009修复/合伙人+CardUI标签刷新/数值调整(全商品+50%+关卡分×1.15)
-- [技术规范 2026-07-05](tech-patterns-effects-triggers.md) — EventEffect全表17个/标签系统/等级系统/get_effective_level/has_color统一入口/CardConfig字段格式/王牌配置6字段/系统参数可扩展项/预览系统自适应槽位
-- [开发日志 2026-07-05 全天](dev-log-20260705.md) — 标签×3(永恒/变色龙/超体)+事件体系全扩展(7事件/17Effect)+初始槽位5→4+王牌涨价50%+TEXTURE字段全删除(60条)+CardConfig修复21张NAME错位+ShowOPCard node_paths修复+get_effective_level模式+ghost_magic_ids+底数>=0
-- [卡牌养成的情感价值 (2026-07-05)](card-nurturing-emotional-value-20260705.md) — 永久牌库+魔法印记DIY+卡牌UID=玩家对牌组的所有权和依恋感，本作核心差异化维度
-- [重设计决策 (2026-07-05)](design-decisions-20260705.md) — 颜色-运算符解绑后的经济调整：卡包提价+随机折扣/颜色魔法降价至6/印记上限按品质分级
-- [开发日志 2026-07-06](dev-log-20260706.md) — 全天大重做：三色卡牌+王牌全部泛化(不限色触发+本家加成)/STS式初始牌组/魔法分层降价/底数delta写入clamp/事件强化/三色定位终稿
-- [底数 delta clamp 模式](delta-clamp-pattern-20260706.md) — turn_base_delta 写入时 clamp 技术规范：解决负数沼泽使得后续加法失效的 Bug
-- [开发日志 2026-07-06 下半场](dev-log-20260706-pt2.md) — 王牌价格重构/商店品质动态权重/事件飘字反馈/商品双击购买/BaseCardData数据层重构/结算动画设计讨论
-- [开发日志 2026-07-07](dev-log-20260707.md) — 事件牌系统：商店事件牌/通用概率门/3个T1事件/BaseCardData底层重构/底数牌设计讨论
-- [开发日志 2026-07-08](dev-log-20260708.md) — 结算系统重构/效果飘字系统(全红黄蓝52张)/卡牌动画实验+回退/撞击卡牌名飘字
-- [开发日志 2026-07-09](dev-log-20260709.md) — 王牌飘字系统(38张全量)/activate动画/Bug×2/音效系统(AudioManager随机集+CardUI接入+金币UI层检测)
-- [技术规范 (2026-07-19 更新)](tech-patterns-effects-triggers.md) — 教程AnimationPlayer集成+RESET竞态防护/绿色封锁多入口模式/GachaConfig黑名单接线/效果削弱范式(自举切断+方差控制)
-- [开发日志 2026-07-14](dev-log-20260714.md) — InfoPage Lv1隐藏商店/古战场遗迹重做(华贵的羽袍+磨损的腰包+折断的魔杖)/利息上限+魔法容量系统参数/结局面板设计规划
-- [开发日志 2026-07-15](dev-log-20260715.md) — 底牌系统设计定稿(红色×3)/结局面板全局统计/事件5金改/群众路线重做/新手教程优先级
-- [开发日志 2026-07-16](dev-log-20260716.md) — 天龙3D体验/简历优化/自我介绍迭代(求职全流程见daily-life)
-- [开发日志 2026-07-18](dev-log-20260718.md) — 梦幻家园笔记整理/三款游戏横向对比框架(个人内容见daily-life)
-- [开发日志 2026-07-19](dev-log-20260719.md) — 更高更强削弱/教程弃牌+AnimationPlayer/绿色全封锁/GachaConfig黑名单接线/二合爬塔RPG设计定稿
-- [Flambé 体验笔记 (2026-07-19)](flambe-notes-20260719.md) — 畅游笔试第三款：二合建造驱动/加工链+工具棋子/冷却压力分散/小额高频付费/与梦幻消除战对比
-- [二合爬塔RPG 设计文档 (2026-07-19)](../Desktop/二合爬塔RPG_设计文档.md) — 独立实现设计文档：5×7棋盘/同型升级+异型释放双轨/六元素战术/下落填充/RPG装备体系/MVP六阶段计划
-- [二合+爬塔RPG 设计概念](merge2-tower-rpg-design.md) — 畅游笔试第三题备用方案+可能独立独游/六元素合成战斗/回合制倒计时/Godot demo
-- [开发日志 2026-07-20](dev-log-20260720.md) — 二合爬塔RPG场景搭建就绪(个人内容见daily-life)
-- [关系边界确立 (2026-07-20)](relationship-boundary-20260720.md) — 单向兼容模式识别/善良vs自我消耗区分/不主动不解释不删也不哄
-- [底牌系统设计 (2026-07-15)](base-card-design-20260715.md) — 红色底牌×3(不灭的烈阳/熔火意志/助燃剂)，主动技能+冷却+替换继承，UI与魔法统一竖直长矩形
-- [开发日志 2026-07-11](dev-log-20260711.md) — 燃尽重做/bonus_requeue插队系统/UI音效架构/临时魔法Bug修复/焚身→燃尽改名
+# 记忆索引
+
+> 本文件只做索引（每文件一行），具体内容按需在对应窗口「读取 XX 记忆」加载。
+> 使用方式：Arithmetrick 项目 → 读 suanle-project + tech-patterns；求职 → 读 daily-life 月度 + interview-*；日常 → 读 daily-life 月度。
+
+## Arithmetrick 项目（核心）
+
+- [项目现状](suanle-project.md) — 四色运算DBG，36常规王牌+22关卡王牌全完成，Steam过审，腾讯比赛9/15参赛，当前王牌修复主线
+- [效果/王牌技术规范](tech-patterns-effects-triggers.md) — 王牌修改规范(判定放_can_trigger/bonus_requeue/is_bonus一牌一次/ON_MATH_BEGIN/惰性初始化/清队列/pending跨reset)+EventEffect全表/标签/等级/飘字/批量串行/飘名抑制
+- [旧案参考原型](suanleba-plus-reference.md) — 「算了吧？plus」参考原型
+
+## Arithmetrick 设计文档
+
+- [世界观设定](world-setting-20260815.md) — 数字空间推演历史，运算牌=历史节点/王牌=推演规则/四色=四幕剧
+- [卡牌情感化系统](card-emotional-system-20260619.md) — ID系统/X品质/专属魔法/回忆录/收藏柜
+- [卡牌养成情感价值](card-nurturing-emotional-value-20260705.md) — 永久牌库+印记DIY+UID=所有权依恋感，核心差异化
+- [绿色套牌设计](green-deck-design-20260627.md) + [绿牌复盘](green-deck-retrospective-20260628.md)
+- [蓝色套牌设计](blue-deck-design-20260617.md) — 15张÷弃置转化流
+- [底牌系统](base-card-design-20260715.md) — 红色底牌×3，主动技能+冷却+替换继承
+- [经济平衡](economic-balance-20260702.md) — 全魔法定价/异彩重做/盲盒/利息
+- [王牌重设计](ace-redesign-20260622.md) — 27常规+22关卡王牌 9xxx 体系
+- [设计决策 6/2](design-decisions-20260602.md) / [6/10](design-decisions-20260610.md) / [7/5](design-decisions-20260705.md)
+- [设计哲学/面试叙事](design-philosophy-20260710.md) — 迭代驱动设计/风险筹码/30秒pitch
+- [项目里程碑](milestones-20260606.md) — M3-M5 规划
+- [发布前规划](release-plan-20260627.md) — 三色打磨发布/社区共创路线
+- [商店颜色过滤](shop-color-filter-20260627.md) — 颜色按钮循环切换权重倾斜
+- [结算序列器设计](settlement-sequencer-design.md) + [实施决策](settlement-sequencer-decisions-20260612.md)
+- [名词释义表](terminology-glossary-20260620.md) — 运算卡/王牌/异彩/镀层/槽位/操作动词
+- [教程系统](tutorial-system-20260715.md) — TutorialOverlay 步骤状态机+输入门控
+
+## 参赛 / 备用项目
+
+- [腾讯独立游戏比赛](tencent-indie-competition-20260915.md) — 9/15截止，用Arithmetrick参赛
+- [元素反应复刻](elemental-reaction-project.md) + [反应规则](elemental-reaction-rules.md) — 腾讯开局大作业，Godot 4.6，16/16反应
+- [米哈游3D解谜构想](mihoyo-3d-puzzle-20260710.md) — 冲刺+回溯双机制
+- [二合爬塔RPG](merge2-tower-rpg-design.md) + [技术规范](merge2-tech-patterns-20260721.md) — 畅游笔试备用方案
+- [Flambé体验笔记](flambe-notes-20260719.md) — 畅游笔试第三款游戏
+
+## 求职
+
+- [日常8月·求职主线](daily-life-2026-08.md) — 畅游四轮全过+测评通过等offer（含类别索引）
+- [日常7月·求职全流程](daily-life-202607.md) — 投递→一面→笔试→二面→转北京（含类别索引）
+- [面试复盘 7/24](interview-reflection-20260724.md) — 二面抽象→具体切换/示弱补救
+- [面试复盘 8/13](interview-reflection-20260813.md) — 三面芦宁数值面/文档短板/估算锚定
+- [面试复盘 8/18](interview-reflection-20260818.md) — 复试湛蕾业务深面/教学式反馈
+- [复试前夜准备](interview-prep-20260818.md) — 三面复盘深化/战前清单
+
+## 人际关系 / 自我认知
+
+- [关系边界确立](relationship-boundary-20260720.md) — 单向兼容识别/三原则
+- [亲密关系模式](intimacy-patterns-mate-selection-20260721.md) — 幻想驱动/择偶四维/价值等式
+- [推荐决策模型修正](feedback-decision-model.md) — 社交/联机因素权重优先
+- [深度对话 8/1](deep-conversation-20260801.md) — 博弈论/自由意志/ENFJ/多益复盘
+
+## 用户画像 / 偏好
+
+- [用户偏好](user-prefs.md) — 策划开发者/Godot 4.6/中文命名/成本策略
+- [游戏口味](gaming-taste.md) — 五维认知框架/Portal封顶/The Witness退款
+
+## 学习 / 论文
+
+- [Unity学习计划](unity-learning.md) — 3D项目转Unity/团结引擎
+- [AI/ML学习](ai-ml-learning.md) — LoRA微调NPC对话方向
+- [毕业论文进度](thesis-progress-20260808.md) — LLM叙事评估+Prompt优化
+
+## 其他
+
+- [电脑性能](laptop-performance-2026.md) — GPU热降频待重涂硅脂/主力游戏转瓦洛兰特
+- [成本策略](cost-strategy-20260815.md) — DeepSeek 8/17涨价应对
+
+---
+## 归档（已清理，备份在 memory-archive/）
+
+- 开发日志 48 个（6/19-9/1）→ `memory-archive/开发日志/`
+- 零散规范 9 个（tag-system/color-judgment/wild-trigger-audit 等）→ `memory-archive/技术规范-旧/`
+- 逐日日常记录 10 个 → 已整合进 daily-life-2026-08.md

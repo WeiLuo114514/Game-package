@@ -1,6 +1,6 @@
 ---
 name: tech-patterns-effects-triggers
-description: 运算牌效果和王牌效果的技术规范 — apply vs trigger vs signal 三套模式、ON_CARD_RESOLVED触发器、王牌触发器统一派发、种子系统+RNG架构、AnimationRequest、飘字、UI刷新、音效系统、bonus_requeue插队、效果范围预览系统、绿色封锁多入口模式、效果削弱范式（2026-08-08 更新）
+description: 运算牌效果和王牌效果的技术规范 — 王牌修改规范(判定放_can_trigger失败静默/bonus_requeue重触发/ON_CARD_RESOLVED的is_bonus一牌一次判定/ON_MATH_BEGIN触发器/状态惰性初始化/结算期移除卡同步清队列/pending_blind_pack_type跨reset存活)、apply vs trigger vs signal 三套模式、ON_CARD_RESOLVED触发器、王牌触发器统一派发、种子系统+RNG四流架构、AnimationRequest、批量王牌效果串行同步(apply_card_effects_serial)、王牌结算重复飘名抑制、飘字、UI刷新、音效系统、bonus_requeue插队、效果范围预览系统、绿色封锁多入口模式、效果削弱范式（2026-09-01 更新）
 metadata: 
   node_type: memory
   type: reference
@@ -9,7 +9,35 @@ metadata:
 
 # 效果系统技术规范
 
-> 最后更新：2026-07-14
+> 最后更新：2026-09-01
+
+## 王牌修改规范（2026-09-01 从实测提炼，改王牌优先查这里）
+
+### 1. 概率判定放 `_can_trigger`（失败静默）
+- 概率类王牌把 RNG 判定写在 `_can_trigger`（返回 bool）。失败时 `try_execute` 返回 false → 框架 `_signal_wild_success(false)` 不播音效/动画。
+- 判定放 `_execute` 里则失败也返回 true → 误播反馈。成功时框架自动播 activate 动画+声效，**不要手动再调 `play_wild_activate_anim`**（会重复播/打断）。
+- 判定所需的 context（如 `card_node`）在 `_can_trigger` 里也能读。
+
+### 2. 重触发用 `bonus_requeue`（禁止 `do_effect`）
+- 「再结算一次」类效果（子母弹/暴怒/东山再起）：`GameData.bonus_requeue.append(card_node)`。框架 `_handle_post_effect_variants` 以 `is_bonus` 插回结算队列 → 该牌完整重播 math 动画+音效，播完才进下一张。
+- 直接 `card_node.do_effect()` 绕过队列 → 动画并发乱序（bug 类）。
+
+### 3. ON_CARD_RESOLVED 的 `is_bonus`：一牌一次判定
+- `PlayField._execute_card_effect_phase` 派发 ON_CARD_RESOLVED 时 context 已带 `is_bonus`（取 entry）。重触发类王牌必须在 `_can_trigger`/`_execute` 检查 `context.get("is_bonus")` 并跳过 → 防无限插队。TagSystem.dispatch_one 同 context。
+
+### 4. `ON_MATH_BEGIN` 触发器（stage_mods 类数学效果）
+- `TriggerDefines.gd` 已新增 `ON_MATH_BEGIN`，在 `PlayField._animate_math_begin`（MATH_BEGIN 阶段，运算结算过渡）派发。
+- 数学类 stage_mods（反方向的钟 `reverse_math` / 斗转星移 `swap_slot_1_and_n`）用此触发器 → 激活动画与效果生效同步。**不要挂 ON_PRE_SETTLE**（动画早播、效果脱节）。
+
+### 5. 状态惰性初始化（不依赖获取路径）
+- 王牌运行时状态（如 9002 的 N）用辅助函数「首次访问时确定并持久化」：ON_GAME_START / `get_current_description` / 首次结算，任一先到即设。
+- 不要绑定 boss 正常推进路径——`/givewild`、`force_boss_trial` 直加**不触发 ON_GAME_START**（实测踩坑）。
+
+### 6. 结算期移除槽位牌：同步清 settlement_queue
+- WILD_CARD 阶段移除槽位牌时四件事：`discard_pile.append` + `on_card_to_discard` + **从 `settlement_queue` 删对应 entry**（防 `_prepare_math_queue` 访问已释放节点崩溃）+ `active_zone_cards[i]`/`active_zone[i]` 置 null + `queue_free()`（或右侧飞出动画）。
+
+### 7. `pending_blind_pack_type`/`pending_ultimate_pack` 跨 reset 存活
+- 盲盒在 `reset_for_new_game()` **之前**设值、RoundMenu **之后**消费 → `_reset_state()` 不清理这两个 flag，仅 `init_game_from_deck()`（新局）显式清除。
 
 ## CardData 等级系统（2026-07-05 更新）
 
@@ -759,7 +787,7 @@ func trigger_wild_effects(trigger: String, context: Dictionary = {}) -> void:
 - `trigger_all_wild_effects` 已删除（冗余）
 
 
-## 种子系统 & RNG 架构（2026-08-07 实现）
+## 种子系统 & RNG 架构（2026-08-31 更新为 4 流拆分）
 
 ### 播种
 `GameData.init_game_from_deck()` 开头：
@@ -770,21 +798,38 @@ else:
     set_seed(_rng_seed)  # 用户指定种子，每局重新应用
 ```
 
-### PCG 接口
-| 方法 | 遮蔽的内置函数 | 用途 |
-|------|--------------|------|
-| `randf() -> float` | 全局 randf() | [0,1) 浮点 |
-| `randi() -> int` | 全局 randi() | 随机整数 |
-| `randi_range(a, b) -> int` | 全局 randi_range() | 整数范围 |
-| `randf_range(a, b) -> float` | 全局 randf_range() | 浮点范围 |
-| `rng_shuffle(arr) -> void` | 无（替代 Array.shuffle） | 种子化洗牌 |
-| `chance(pct, name, pos) -> bool` | 无 | 概率判定 + 好运计数 |
+### 4 条独立随机流（都从 `_rng_seed` 确定性派生，互不消费）
+| 流 | 状态变量 | 用途 | 调用方式 |
+|----|---------|------|---------|
+| 局内流 | `_rng_state` | 卡牌效果概率/抽洗/结算/Boss试炼/异彩判定 | `rng_randf/randi_range/randi/randf_range/shuffle` |
+| 事件流 | `_event_state` | 事件池选取/事件效果发放 | `event_randf/randi_range/shuffle` |
+| 商店流 | `_shop_state` | 商店货架/特价/盲盒/卡包内容 | `shop_randf/randi_range/shuffle` |
+| 表现流 | `_cosmetic_rng` | UID/盲盒花纹/夸夸 | `cosmetic_randi_range/randf_range` |
+
+`set_seed(s)` 用盐值打散派生机制流：
+```gdscript
+_event_state = _derive_stream_seed(s, 0x1E7A)
+_shop_state  = _derive_stream_seed(s, 0x50C2)
+```
+`_derive_stream_seed` 与 `_step` 均含 `state == 0` → 时间回退保护（随机局也用时间，行为一致）。
+
+### 流归属原则（关键）
+- **局外内容**（事件/商店/卡包）必须走独立流 → 局内玩家操作（抽牌次数、随机触发）不推进局外流，同种子下商店/事件/卡包内容恒定
+- **表现层**必须走 `cosmetic_*` → 不占种子流、也不要求复现
+- 卡包内容（`open_gacha_pack` + `_roll_variant`）归**商店流**；事件决定"给什么包"用事件流，包内容用商店流
+- 开局牌组抽取、Boss试炼、过关奖励（effect_5001 龙的财宝 / effect_5002 预制魔法）归**局内流**（关卡进程内容）；若要不随局内操作漂移需再拆"奖励流"
 
 ### GDScript 方法遮蔽规则
-Autoload 类定义的同名方法优先于全局内置函数——仅在**该类内部**生效。外部脚本需显式写 `GameData.randi()` 才能使用种子流。
+Autoload 类定义的同名方法优先于全局内置函数——仅在**该类内部**生效。外部脚本需显式写 `GameData.rng_xxx()` / `event_xxx()` / `shop_xxx()` 才能使用对应种子流。
+
+### 已废弃命名
+旧 `randf/randi/randi_range/randf_range` 已全部改名，**不要再调用**（方法不存在 → 返回 Variant → `:=` 类型推断报错）。所有机制随机必须走 4 流之一，表现层走 `cosmetic_*`。
 
 ### 接入范围
-- **已接入**：GameData.gd 全量内部调用 + event_page/shop_page/blind_box/PlayField/EventConfig + 所有 wildCardScript 中涉及游戏逻辑的调用
+- **局内流**：GameData.gd 内部 + effectScript/wildCardScript 全部卡牌效果 + TagSystem + PlayField 洗牌
+- **事件流**：event_page.gd 全部、EventConfig.gd 事件池、RoundMenu.gd 开局事件
+- **商店流**：shop_page.gd 全部、blind_box.gd（除花纹）、GameData.open_gacha_pack/_roll_variant
+- **表现流**：magic_copy_card UID、blind_box 花纹、effect_5004 夸夸、tips/音效/震动/动画等
 - **故意未接入**：纯表现层（tips_label 喝彩/动画、audio_manager 音效、camera_2d 震动、flying_label 弧线、LoadMask 提示、GameData 胜利彩带）
 
 
@@ -940,3 +985,36 @@ consumes_slot() 替代硬编码豁免列表（`_magic_id != 20001 and ...`）。
 - 删除 _append_tags_to_effect_label() 追加/清洗模式（split("。") 无法正确清理 \n 后的标签行）
 - 格式：同排用 `、` 分隔，无 `【】`，末尾起一行
 - _state_slot_enter 中强制重置 hover_Rect.visible=false + _change_scale(normal_vec)
+
+## 批量王牌效果串行同步（2026-09-01 新增）
+
+### 问题
+批量型王牌（连锁引爆 1001 / 你先别急 L9001 / 红灯 L9005 / 警戒线 L9006 / 蓝色忧郁 L9007）对多张运算牌的效果原本一次性全部生效，但飘字逐张 0.6s 间隔 → 效果动画与飘字脱节。
+
+### 模式：apply_card_effects_serial（BaseWildEffect.gd 静态方法）
+```gdscript
+static func apply_card_effects_serial(cards: Array, apply: Callable) -> void
+```
+- `apply: Callable(card: Card) -> String`：同步修改该卡数据并返回飘字文本（空串 = 无变化不飘）
+- 收集窗口内（`SettlementSequencer.is_collecting()`）逐张提交一个 `AnimationRequest`（execute 改数据 / animate 播动画），由 `play_phase_requests` 的 gap 间隔驱动天然串行
+- 非收集窗口回退为同步 `_apply_and_show_card_effect`
+
+### 关键实现细节
+1. **数据改动推迟进 request 的 execute**：`_execute` 循环不再同步改数据。这样 `PlayField._make_wild_fired_callback`（on_fired）比对 before_snap 发现「未变化」→ 批量 `_update_ui` 自动 no-op，无需改它。
+2. **飘字文本跨 lambda 传递必须用数组持有者**：
+   ```gdscript
+   var tip_holder: Array = [""]
+   func(): tip_holder[0] = str(apply.call(card))   # execute
+   func(): _apply_and_show_card_effect(card, tip_holder[0])  # animate
+   ```
+   局部标量变量跨 execute/animate 两个 lambda 写读不可靠（animate 读到空 → 飘字消失）；数组是引用类型，`[0]` 原地改必然同步。
+3. **末位牌数字滚动被掐断**：`_update_ui`（CardUI.gd）**无条件** `_number_tween.kill()`。批量串行时末位牌滚动刚启动，`_refresh_slots_ui()` 立即掐断 → 标签冻在旧值。修复：animate 里 `await tree.create_timer(0.4).timeout`（滚动≈0.35s）等播完再返回；`gap_after` 收紧 0.2s（合计≈0.6s 贴合原飘字节奏）。
+4. **阶段超时**：批量逐个播放较慢，`_apply_pre_settle_mods` 与 `_execute_wild_card_phase` 的 `play_phase_requests()` 放宽为 `play_phase_requests(20.0)`（5s 默认会跳掉后段卡的数据变更）。
+
+### 王牌结算重复飘名抑制（同批修复）
+- `SettlementSequencer` 新增 `current_phase: int`（emit_phase 记录、play_phase_requests 结束清空为 -1）
+- `BaseWildEffect.show_self_tip`：`current_phase == Phase.WILD_CARD && text == get_wild_name()` → return（名字已在阶段开始由 PlayField 显示过）。自定义飘字（如「初始底数+N」）不受影响。
+- `PlayField._execute_wild_card_phase` 阶段开始的名字显示：
+  - 位置用 `effect.global_position`（卡面中心）而非 `wild_node.global_position`（节点原点，结算前是 0,0）
+  - 配置用 `FileManager.get_wild_config(id)`（兼容试炼王牌 9xxx，`wild_id_mapping` 不含 9xxx）
+  - 颜色经 `WildCardUI.COLOR_NAMES.get(key, "white")` 映射（bbcode 需要 "red" 非 "R"）
