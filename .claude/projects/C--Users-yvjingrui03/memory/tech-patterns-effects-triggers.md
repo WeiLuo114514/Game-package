@@ -29,9 +29,12 @@ metadata:
 - `TriggerDefines.gd` 已新增 `ON_MATH_BEGIN`，在 `PlayField._animate_math_begin`（MATH_BEGIN 阶段，运算结算过渡）派发。
 - 数学类 stage_mods（反方向的钟 `reverse_math` / 斗转星移 `swap_slot_1_and_n`）用此触发器 → 激活动画与效果生效同步。**不要挂 ON_PRE_SETTLE**（动画早播、效果脱节）。
 
-### 5. 状态惰性初始化（不依赖获取路径）
-- 王牌运行时状态（如 9002 的 N）用辅助函数「首次访问时确定并持久化」：ON_GAME_START / `get_current_description` / 首次结算，任一先到即设。
-- 不要绑定 boss 正常推进路径——`/givewild`、`force_boss_trial` 直加**不触发 ON_GAME_START**（实测踩坑）。
+### 5. ON_GAME_START = 通用开局触发器（2026-09-02 定稿）+ 状态惰性初始化
+- **写法**：开局类效果（回合-1 / 目标分提升 / 状态初始化等）普通王牌与试炼牌**统一挂 `ON_GAME_START`**。派发点只有一处：`GameData.trigger_wild_game_start()` 在**每关（盲注）战斗开始 = PlayField load_finish（owned 装配后、round 1 前）**对 `owned_wild_cards` 全体派发（temp 实例，不依赖 UI 节点）；试炼牌也在 owned 中故天然覆盖。
+- **触发语义**：每关触发一次。普通王牌每关都触发；要「整局一次」的效果需自身 once-guard。试炼牌只在它激活的那关触发（激活关次才有它的 owned/level 成员）。
+- **试炼牌应用 vs 派发解耦**：`apply_boss_trial`/`force_boss_trial` 只负责「把试炼设为激活」（加入 level_wild_cards + owned），**不再自行派发**。debug `givewild` 对 9xxx 路由到 `force_boss_trial`（使 9xxx 成为激活试炼而非普通拥有），<9000 仍为普通拥有添加。
+- 需「首次访问时确定并持久化」的状态（如 9002 的 N）仍用惰性辅助函数：ON_GAME_START / `get_current_description` / 首次结算任一先到即设，`set_state` flag 保证每 Boss 只执行一次（`wild_data.data` 与节点共享，WildData 每 Boss 重建自动清零）。
+- 一次性开局惩罚/加成建议套「once-guard」：`if get_state(key,false): return; set_state(key,true)`。
 
 ### 6. 结算期移除槽位牌：同步清 settlement_queue
 - WILD_CARD 阶段移除槽位牌时四件事：`discard_pile.append` + `on_card_to_discard` + **从 `settlement_queue` 删对应 entry**（防 `_prepare_math_queue` 访问已释放节点崩溃）+ `active_zone_cards[i]`/`active_zone[i]` 置 null + `queue_free()`（或右侧飞出动画）。
@@ -1018,3 +1021,22 @@ static func apply_card_effects_serial(cards: Array, apply: Callable) -> void
   - 位置用 `effect.global_position`（卡面中心）而非 `wild_node.global_position`（节点原点，结算前是 0,0）
   - 配置用 `FileManager.get_wild_config(id)`（兼容试炼王牌 9xxx，`wild_id_mapping` 不含 9xxx）
   - 颜色经 `WildCardUI.COLOR_NAMES.get(key, "white")` 映射（bbcode 需要 "red" 非 "R"）
+
+
+## 试炼王牌调优笔记（2026-09-02）
+
+> 触发器语义速查：**「王牌效果结算时」= ON_SETTLE_STEP**；**「游戏开始时/开局」= ON_GAME_START**（见规范5，已统一派发）。开局惩罚/加成一律加 once-guard。
+
+- **三色试炼（L9005/9006/9007）范式**：底数增益挂 `ON_SETTLE_STEP`（王牌结算，`apply_card_effects_serial` 对同色牌逐张 +1 飘字）；同色牌结算/弃置抬目标分挂 `ON_CARD_RESOLVED`/`ON_DISCARD_CARD`，分支内 `goal*=1.05/1.08` + `GameData.battle_info_changed.emit()` 刷面板 + 飘「目标分数 +X%」。条件判断放 `_can_trigger`（同色判定统一 `GameData.has_color`），未命中静默、不误播 activate 动画（L9001 是 ON_SETTLE_STEP 逐张改底数的先例）。
+- **L9004 东山再起**：ON_SETTLE_STEP `goal*=1.15`（逐结算复利，desc 目标分+15%）；ON_CARD_RESOLVED 末尾牌重触发不变。
+- **L9008 奖励关**：惩罚 ON_GAME_START 一次性回合-1（once-guard）；奖励 ON_SETTLE_STEP 每剩余1费用→1$（`remaining=cost.max-cost.spent`，`cost.spent`=场上牌总费用，清场才归零，故结算瞬间量到本回合未用额度）。
+- **L9009 卡牌大师**：抽牌 15% 改色成功时 `show_self_tip("卡名 变X", 新色bbcode)`。
+- **L9011 量子纠缠**：改费用在 `CardData.cost_shift` 记方向（-1/+1/0），CardUI CostLabel 按方向着色（变低 #4da6ff 蓝 / 变高 #ff6666 红 / 0 白或 LIMITed 蓝）；`GameData.on_card_to_discard` 里 `cost_shift=0` 弃牌恢复。改色值只需动 CardUI 那两行。
+- **L9013 资产税**：`ON_SETTLE_STEP`，每王牌结算 `goal += goal*money*0.02`（desc 与 code 2% 已对齐；money 随利息增长会复利放大税基）。
+- **L9014 倾囊相授**（最简单版）：ON_GAME_START 一次性 `max_round += 1`（奖励回合）+ `goal*=1+0.25*owned_wild_cards.size()`（每王牌目标分+25%，含试炼自身），once-guard。
+- **L9015 傲慢**：N 惰性初始化（同 9002，`slot_n` 0-based、`get_current_description` 显示「目标牌位:N+1」）；ON_SETTLE_STEP（王牌结算）把 N 号位牌底数翻倍（`turn_base_delta += base+delta`），**N 号位空则本回合跳过、N 不变**；生效后 N 随机改变；ON_GAME_START 目标 ×2。
+- **L9016 嫉妒**：改为 ON_SETTLE_STEP **自行处理**（参照 9002 移除链路：弃牌 + on_card_to_discard + 清 settlement_queue + 槽位置空 + 右飞离屏），找场上最高/最低底数牌，最高牌底数永久加到最低牌上；原 PlayField `discard_highest` stage_mod 分支已删。
+- **L9020/9021 统一迁到 ON_SETTLE_STEP**（stage_mod 在 SETTLE_END 消费，WILD_CARD 设置仍早于消费，安全）：9020 color_score=0.20（另 ON_GAME_START 目标×2）、9021 score_mult=1.5+cost_per_empty=1（王牌结算飘「得分×1.5·下回合费用-N」）。
+- **收尾乘分类（color_score/score_mult）的显示坑**：math 动画已把 InfoBoard 刷到乘前终值，settle_end 再乘大 current_score 时**必须 `battle_info_changed.emit()`** 刷新，否则界面数字不变像「没生效」（通关判定已用乘后值）。此 emit 统一加在 `PlayField._apply_after_settle_stage_mods` 末尾。效果是否真生效可先用两行探针（设 flag / 消费分支各 print）快速定位。
+- **L9019 贪婪**：迁 ON_SETTLE_STEP（直接 `base_card.val += money`、`money ×0.8`，飘字显示实际加值 added 而非扣后值）。
+- **L9022 斗转星移**：N 存 `GameData.level_swap_n_value`（PlayField swap 用，非 wild_data），惰性初始化 + `get_current_description`「目标牌位:N」。**PlayField swap 段**：物理换位（`await _perform_settlement_swap`）后 N 重roll 保证 ≠ 旧值；结算顺序**强制按 `active_zone_index` 升序排序** = 换位后场上新左→右（勿依赖 swap 内部按队列索引配对，牌被移除/空槽会失配）。

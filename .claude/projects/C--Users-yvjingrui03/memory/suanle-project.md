@@ -59,10 +59,12 @@ metadata:
 - **系统参数**：settle_tempo（节奏倍率）/ double_click_window（双击窗口）可调
 - **Steam 商店页审核通过**（7/24 税务审核、8/9 等待→已通过）
 
-## 当前重点工作（2026-09-01）
+## 当前重点工作（2026-09-01 → 2026-09-02）
 
-- **王牌 bug 修复 + 效果优化**（本会话主线）：子母弹重触发队列化、9002今天不行重写、9003反方向的钟迁到ON_MATH_BEGIN、9004东山再起双触发器、盲盒卡包跨reset存活
-- 修改规范已沉淀到 [[tech-patterns-effects-triggers]]
+- **王牌 bug 修复 + 效果优化**（本会话主线）：
+  - 9/01：子母弹重触发队列化、9002今天不行重写、9003反方向的钟迁到ON_MATH_BEGIN、9004东山再起双触发器、盲盒卡包跨reset存活
+  - 9/02：L9004 目标分+15% 惩罚重做；三色试炼 L9005/9006/9007 底数增益迁 ON_SETTLE_STEP + 同色牌结算抬目标分（飘字+刷面板）；L9008 回合-1+费用换钱；L9009 改色飘字；L9011 费用字体蓝/红着色（cost_shift）；L9013 触发改王牌结算；L9014 定稿（开局回合+1 + 每王牌目标分+25%）
+  - **系统级：`ON_GAME_START` 升格为通用开局触发器**——`GameData.trigger_wild_game_start()` 每关战斗开始（PlayField 进入）对 owned 王牌（普通+试炼统一）派发，不再依赖特殊入口；`givewild` 9xxx 路由到 force_boss_trial。详见 [[tech-patterns-effects-triggers]] 规范5
 - **腾讯独立游戏比赛 9/15 截止**，用 Arithmetrick 参赛 [[tencent-indie-competition-20260915]]
 
 ## 经济/关卡参考
