@@ -38,7 +38,8 @@
 
 ## 求职
 
-- [日常8月·求职主线](daily-life-2026-08.md) — 畅游四轮全过+测评通过等offer（含类别索引）
+- [日常9月·offer决策](daily-life-2026-09.md) — 畅游offer到(15k/14-16薪/公积金12%)接受决策+腾讯比赛9/15倒计时
+- [日常8月·求职主线](daily-life-2026-08.md) — 畅游四轮全过+测评通过→9/6已拿offer（含类别索引）
 - [日常7月·求职全流程](daily-life-202607.md) — 投递→一面→笔试→二面→转北京（含类别索引）
 - [面试复盘 7/24](interview-reflection-20260724.md) — 二面抽象→具体切换/示弱补救
 - [面试复盘 8/13](interview-reflection-20260813.md) — 三面芦宁数值面/文档短板/估算锚定
@@ -71,6 +72,6 @@
 ---
 ## 归档（已清理，备份在 memory-archive/）
 
-- 开发日志 48 个（6/19-9/1）→ `memory-archive/开发日志/`
+- 开发日志 49 个（6/19-9/8，最新 dev-log-20260908）→ `memory-archive/开发日志/`
 - 零散规范 9 个（tag-system/color-judgment/wild-trigger-audit 等）→ `memory-archive/技术规范-旧/`
 - 逐日日常记录 10 个 → 已整合进 daily-life-2026-08.md

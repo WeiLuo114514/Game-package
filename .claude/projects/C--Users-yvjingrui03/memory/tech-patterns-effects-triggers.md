@@ -427,7 +427,7 @@ Card._on_mouse_exited / Card._state_drag_enter
 
 - **效果脚本**: `magicScript/effects/magic_double_score.gd`
 - **类型**: 非目标魔法（NEEDS_TARGET=false），一次性消耗（consumes_slot() → false）
-- **效果**: `player_money *= 2`，分数为 0 时 `show_tip("当前没有分数可以翻倍！")` 返回 false 不消耗
+- **效果**: `current_score *= 2`（9/05 修正：原误写 money，目标对象应为当前分数），分数为 0 时 `show_tip("当前没有分数可以翻倍！")` 返回 false 不消耗；改后 `GameData.battle_info_changed.emit()` 刷新分数面板
 - **价格**: 18$（MagicConfig.gd 90001），产出：商店刷新 + Boss盲盒 HIGH档位
 - **激活**: MagicSlot._on_magic_activated → effect_node.activate(null) → 成功后 _consume_magic() 移除
 
@@ -1032,7 +1032,7 @@ static func apply_card_effects_serial(cards: Array, apply: Callable) -> void
 - **L9008 奖励关**：惩罚 ON_GAME_START 一次性回合-1（once-guard）；奖励 ON_SETTLE_STEP 每剩余1费用→1$（`remaining=cost.max-cost.spent`，`cost.spent`=场上牌总费用，清场才归零，故结算瞬间量到本回合未用额度）。
 - **L9009 卡牌大师**：抽牌 15% 改色成功时 `show_self_tip("卡名 变X", 新色bbcode)`。
 - **L9011 量子纠缠**：改费用在 `CardData.cost_shift` 记方向（-1/+1/0），CardUI CostLabel 按方向着色（变低 #4da6ff 蓝 / 变高 #ff6666 红 / 0 白或 LIMITed 蓝）；`GameData.on_card_to_discard` 里 `cost_shift=0` 弃牌恢复。改色值只需动 CardUI 那两行。
-- **L9013 资产税**：`ON_SETTLE_STEP`，每王牌结算 `goal += goal*money*0.02`（desc 与 code 2% 已对齐；money 随利息增长会复利放大税基）。
+- **L9013 资产税**：`ON_SETTLE_STEP`，每王牌结算 `goal += goal*min(money,40)*0.005`（9/8 调：每货币 +0.5%、单次上限 20%=货币≥40 封顶；原 2% 无上限版本作废）。
 - **L9014 倾囊相授**（最简单版）：ON_GAME_START 一次性 `max_round += 1`（奖励回合）+ `goal*=1+0.25*owned_wild_cards.size()`（每王牌目标分+25%，含试炼自身），once-guard。
 - **L9015 傲慢**：N 惰性初始化（同 9002，`slot_n` 0-based、`get_current_description` 显示「目标牌位:N+1」）；ON_SETTLE_STEP（王牌结算）把 N 号位牌底数翻倍（`turn_base_delta += base+delta`），**N 号位空则本回合跳过、N 不变**；生效后 N 随机改变；ON_GAME_START 目标 ×2。
 - **L9016 嫉妒**：改为 ON_SETTLE_STEP **自行处理**（参照 9002 移除链路：弃牌 + on_card_to_discard + 清 settlement_queue + 槽位置空 + 右飞离屏），找场上最高/最低底数牌，最高牌底数永久加到最低牌上；原 PlayField `discard_highest` stage_mod 分支已删。
@@ -1040,3 +1040,13 @@ static func apply_card_effects_serial(cards: Array, apply: Callable) -> void
 - **收尾乘分类（color_score/score_mult）的显示坑**：math 动画已把 InfoBoard 刷到乘前终值，settle_end 再乘大 current_score 时**必须 `battle_info_changed.emit()`** 刷新，否则界面数字不变像「没生效」（通关判定已用乘后值）。此 emit 统一加在 `PlayField._apply_after_settle_stage_mods` 末尾。效果是否真生效可先用两行探针（设 flag / 消费分支各 print）快速定位。
 - **L9019 贪婪**：迁 ON_SETTLE_STEP（直接 `base_card.val += money`、`money ×0.8`，飘字显示实际加值 added 而非扣后值）。
 - **L9022 斗转星移**：N 存 `GameData.level_swap_n_value`（PlayField swap 用，非 wild_data），惰性初始化 + `get_current_description`「目标牌位:N」。**PlayField swap 段**：物理换位（`await _perform_settlement_swap`）后 N 重roll 保证 ≠ 旧值；结算顺序**强制按 `active_zone_index` 升序排序** = 换位后场上新左→右（勿依赖 swap 内部按队列索引配对，牌被移除/空槽会失配）。
+
+## 系统坑位 / 规范（2026-09-08 会话速记）
+
+- **存档：Godot `FileAccess.open(WRITE)` 不会自动建父目录**。目录缺失时 open 返回 null、代码静默 return →「进度不落盘」极难排查。三栏存档(slot)化改路径后必须配套目录初始化：`GameData._ensure_slot_storage()`（建 `user://slot_N` + 把旧版根目录 history/ledger/collected 迁移进当前槽，写成功才删旧档），`_ready`（load_active_slot 之后）与 `switch_slot` 各调一次。
+- **`CONNECT_ONE_SHOT` 只在回调被触发后自断**。用户取消/中途退出 → 回调永不触发、监听残留成「僵尸」→ 下次该信号触发时**所有僵尸一起引爆**（战场魔法：先长按专属取消、再用折损 → 专属被误删）。修复范式 = 进新流程前先 `disconnect` 已挂的**具名**回调再重连 + 用变量记待消费目标（`PlayField._on_slot_magic_*`；盲盒即用路径本就是正确写法，战场那条之前漏了）。
+- **`_reset_state` 是「每关」清理**：`reset_for_new_game()` 每关结算都会调（PlayField:814 推进关卡）。**整局级状态不能放这里**（生效槽/王牌槽/魔法槽容量复位放进 `init_game_from_deck`，唯一整局入口）。函数名像"新局"但按调用点判断语义。
+- **同一详情页有两条打开路径时收敛到 `show_card` 单入口**：`card_desk_page`（战场牌堆查看）曾手写 `init_ui+visible=true` 简化版，漏了预览按钮/战绩面板/翻转锁状态 → 满级卡仍显示「查看升级状态」。改调 `description_page.show_card()` 与右键手牌路径一致。
+- **EndingPage 全屏收藏面板(NewCollocation) 在 `_finish_return` 后未复位 visible** → 第二次 `open()` 时罩在 `next` 按钮上吞鼠标（表现为"再结算没有下一步"）。复用页面须在 `open()` 入口显式复位内部面板，勿只靠动画。
+- **效果自增益计数**：自增益型效果（随波逐流等）生效后要 `Card_node.add_effect()`（→ increment_effect_count），否则增益计数不加（inspiring 双倍等联动失效）。
+- **异彩弃置经济双层解耦**：折損改「免费弃置（不耗免费次数、不推高弃牌费用）」后，弃牌费用阶梯用独立 `fold_fee_discard_count` 计数（与计次/触发器用的 `discard_count_this_turn` 解耦）；免费弃置无条件放行、不计费用阶梯。逐客令/吹又生多计次只喂计次类效果、不再抬费用。
