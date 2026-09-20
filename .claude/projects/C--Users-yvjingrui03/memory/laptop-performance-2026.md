@@ -27,6 +27,7 @@ metadata:
 | `C:\Users\yvjingrui03` | `WeiLuo114514/Game-package` | 本地 `master` → 远程 **`memory`**（upstream 已配 `origin/memory`） |
 
 - Game-package 的远程 `master`/`main` 是**空树**（原 LFS 指针文件已被最后提交删光），与记忆库历史无关，**推记忆库绝不能 force 到 master**
+- **坑**：本地 `master` ↔ 远程 `memory` 不同名，而 `push.default=simple` 在名字不匹配时会**静默拒绝**裸 `git push`。记忆库必须显式写 `git push origin master:memory`
 - 国内直连 github.com:443 不通，push 前需先开代理（2026-09-20 已验证：开代理后正常）
 
 **How to apply:** 用户再提游戏掉帧/性能时，先调出此诊断；换硅脂后可复跑 `C:\Users\yvjingrui03\fps_diag.ps1`（保留中）对比 GPU 时钟是否回到 ~2500MHz。用户提「备份」时，先确认目标是异地（push 到远程）还是异盘（拷到另一块盘）——两者防的是不同的故障。相关：[[gaming-taste]]、[[suanle-project]]
