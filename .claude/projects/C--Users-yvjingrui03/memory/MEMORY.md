@@ -5,7 +5,7 @@
 
 ## Arithmetrick 项目（核心）
 
-- [项目现状](suanle-project.md) — 四色运算DBG，36常规王牌+22关卡王牌全完成，Steam过审，腾讯比赛9/15参赛，当前王牌修复主线
+- [项目现状](suanle-project.md) — 四色运算DBG，68运算牌+38常规王牌+23关卡王牌，Steam商店页过审/即将上架可试玩，腾讯比赛9/12已提交
 - [效果/王牌技术规范](tech-patterns-effects-triggers.md) — 王牌修改规范(判定放_can_trigger/bonus_requeue/is_bonus一牌一次/ON_MATH_BEGIN/惰性初始化/清队列/pending跨reset)+EventEffect全表/标签/等级/飘字/批量串行/飘名抑制
 - [旧案参考原型](suanleba-plus-reference.md) — 「算了吧？plus」参考原型
 
@@ -30,11 +30,16 @@
 
 ## 参赛 / 备用项目
 
-- [腾讯独立游戏比赛](tencent-indie-competition-20260915.md) — 9/15截止，用Arithmetrick参赛
+- [腾讯独立游戏比赛](tencent-indie-competition-20260915.md) — ✅ 9/12已提交（截止9/15）·交付物清单+内容规模数字（68/38/23）·「即将上架Steam可试玩」
+- [比赛Deck源文件](tencent-deck-source.md) — 源文件位置 + Playwright渲染流程 + 素材目录改名坑
 - [元素反应复刻](elemental-reaction-project.md) + [反应规则](elemental-reaction-rules.md) — 腾讯开局大作业，Godot 4.6，16/16反应
 - [米哈游3D解谜构想](mihoyo-3d-puzzle-20260710.md) — 冲刺+回溯双机制
 - [二合爬塔RPG](merge2-tower-rpg-design.md) + [技术规范](merge2-tech-patterns-20260721.md) — 畅游笔试备用方案
 - [Flambé体验笔记](flambe-notes-20260719.md) — 畅游笔试第三款游戏
+
+## 学业 / 综测
+
+- [综合素质测评](comprehensive-evaluation.md) — 五育权重(智育35%)·智育公式与无上限·竞赛加分只认政府部门主办赛·2025-26学年加权基线85.88·莉莉丝决赛已决定不申报
 
 ## 求职
 

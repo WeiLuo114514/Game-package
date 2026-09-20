@@ -570,17 +570,31 @@ copy.applied_magic_ids.clear()
 不在 overlay 层吞鼠标事件，而是在目标脚本入口处通过 GameData flag 做门控：
 
 ```gdscript
-# GameData.gd
-var is_tutorial := false
+# GameData.gd —— 教程状态机（2026-09-12 由 bool 改为 int 三态）
+enum TutorialState { NOT_DONE = 0, IN_PROGRESS = 1, COMPLETED = 2 }
+var tutorial_state: int = TutorialState.NOT_DONE
 var tutorial_allows_drag := false
 var tutorial_allows_settle := false
 
 # op_card.gd _gui_input 入口
-if GameData.is_tutorial and not GameData.tutorial_allows_drag: return
+if GameData.tutorial_state == GameData.TutorialState.IN_PROGRESS and not GameData.tutorial_allows_drag: return
 
 # PlayField.gd _on_settlement_button_clicked 入口
-if GameData.is_tutorial and not GameData.tutorial_allows_settle: return
+if GameData.tutorial_state == GameData.TutorialState.IN_PROGRESS and not GameData.tutorial_allows_settle: return
 ```
+
+**⚠️ int 真值陷阱（改三态时踩过）**：GDScript 里 `if 2:` 为 **true**。门控若保留旧写法 `if GameData.tutorial_state and ...`，「已完成教程」的玩家在正常游戏中会被**永久拦截拖拽与结算**。门控一律写 `== IN_PROGRESS`；`if tutorial_state:` 直接禁止。
+
+**状态语义（三态只用一个变量）**：
+- `NOT_DONE` 未做过 / `IN_PROGRESS` 教程进行中 / `COMPLETED` 已完成（**跳过也算 COMPLETED**）
+- `_finish_tutorial()` 与 `_on_skip_pressed()` **先写 COMPLETED + `save_tutorial_state()`，再调 `_cleanup_tutorial()`**
+- `_cleanup_tutorial()` 必须加守卫 `if tutorial_state == IN_PROGRESS: tutorial_state = NOT_DONE` —— 它同时被 `_exit_tree()` 兜底调用，无条件清零会把刚写入的完成态抹掉
+- 落盘到 `user://settings.cfg` 的 `[tutorial] state`（全局，非槽位），`_ready()` 里读；**只恢复 COMPLETED**，进行中不持久化（中途退出下次从「没做过」开始）
+
+**商店补充教程（Tips）**：教程流程全程在 PlayField、**从不进商店页**，所以商店 `Tips`（4 个 RichTextLabel：refresh/favourite/pack/magic，覆盖全屏、`mouse_filter=2` 不可关闭、**场景里默认 visible=true 故必须显式隐藏**）不能用 `is_tutorial` 判定。做法是**一次性消费**：
+- `GameData.shop_tips_seen`（同落 `settings.cfg` 的 `[tutorial]` 段）
+- 判定集中在 `shop_page._update_tips_visibility()`：`tutorial_state == COMPLETED and not shop_tips_seen` → `tips.visible = true` 并**立刻置 `shop_tips_seen = true` + `save_tutorial_state()`**
+- **消费点必须在 `enter_page()`**，不能在 `_ready()` / `reset_for_new_game()`：后两者在玩家看到商店之前就会跑（`reset_for_new_game` 每关开局都调），提前消费会让提示**永远不显示**。这两个位置只写 `tips.visible = false`
 
 ### 步骤推进
 
@@ -1048,5 +1062,11 @@ static func apply_card_effects_serial(cards: Array, apply: Callable) -> void
 - **`_reset_state` 是「每关」清理**：`reset_for_new_game()` 每关结算都会调（PlayField:814 推进关卡）。**整局级状态不能放这里**（生效槽/王牌槽/魔法槽容量复位放进 `init_game_from_deck`，唯一整局入口）。函数名像"新局"但按调用点判断语义。
 - **同一详情页有两条打开路径时收敛到 `show_card` 单入口**：`card_desk_page`（战场牌堆查看）曾手写 `init_ui+visible=true` 简化版，漏了预览按钮/战绩面板/翻转锁状态 → 满级卡仍显示「查看升级状态」。改调 `description_page.show_card()` 与右键手牌路径一致。
 - **EndingPage 全屏收藏面板(NewCollocation) 在 `_finish_return` 后未复位 visible** → 第二次 `open()` 时罩在 `next` 按钮上吞鼠标（表现为"再结算没有下一步"）。复用页面须在 `open()` 入口显式复位内部面板，勿只靠动画。
+- **复用页面残留状态（同类第二次踩）**：`collection_page` 历史详情框 `history_main_box` 只在 `_refresh_history_detail` 里置 `visible = true`、**无处置 false**；而 `_refresh_history_list` 在 `records.is_empty()` 时提前 return、不走详情刷新 → 切到**没有历史记录的存档槽**后，详情框继续显示上一个槽的残留内容。修法两条一起：① `_refresh_history_detail` **先置 false**，校验通过后才置 true（"默认隐藏"比"默认显示再关"抗漏）；② 空列表分支也必须走一次详情刷新。**判据：任何"填充分支"都要有对应的"清空分支"，否则复用页一定残留。**
 - **效果自增益计数**：自增益型效果（随波逐流等）生效后要 `Card_node.add_effect()`（→ increment_effect_count），否则增益计数不加（inspiring 双倍等联动失效）。
+  - **2026-09-12 全量审计补**：此规则同样适用于**王牌给运算牌加属性**。判据 = 凡改 `turn_base_delta` / `base_number` / `turn_base_mult` / `turn_operator` 都要同步计数（**改运算符也算增益**，先例 `燃点.gd`）。消耗型负向改动（`春泥` 的 `base_number -= 1`）不计。
+  - **重灾区是 `apply_card_effects_serial()`**：它结尾只调 `_update_ui()`、不计数 → 批量王牌（1001 连锁引爆 / L9001 / L9005-9007）集体漏计。修法=在各调用点的 apply lambda 内补 `card.card_data.increment_effect_count()`；**不要**在该 helper 里统一补，因为 L9001 的「×牌底数÷2」是削弱、不应计数。
+  - **`BaseWildEffect.buff_card()`（:99）是零调用者的死代码，且不计数**——以后要用「加属性」辅助函数时别用它。
+  - 结算中不需要额外刷 UI：`PlayField._make_wild_fired_callback`（:482）对 `active_zone_cards` 每张都无条件 `c._update_ui()`，settlement 末尾还有 `_refresh_slots_ui()`。
+  - 影响消费者：`0004 激发潜能` / `1001 连锁引爆` / `10012 爆燃` / `燃尽`，以及激发标签的双倍联动。
 - **异彩弃置经济双层解耦**：折損改「免费弃置（不耗免费次数、不推高弃牌费用）」后，弃牌费用阶梯用独立 `fold_fee_discard_count` 计数（与计次/触发器用的 `discard_count_this_turn` 解耦）；免费弃置无条件放行、不计费用阶梯。逐客令/吹又生多计次只喂计次类效果、不再抬费用。
